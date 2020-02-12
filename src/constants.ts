@@ -1,6 +1,7 @@
 export const ITEMS = [
   "account.id",
   "account.accountName",
+  "account.bindingId",
   "store.channel",
   "store.countryCode",
   "store.cultureInfo",

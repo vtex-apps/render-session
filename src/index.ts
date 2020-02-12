@@ -1,7 +1,23 @@
 import { ITEMS } from './constants'
 
+interface SessionNamespaceItem {
+  value: string
+  keepAlive?: boolean
+}
+
+type AccountFields = 'id' | 'accountName' | 'bindingId'
+
+type SessionNamespace<T extends string> = Record<T, SessionNamespaceItem>
+
+interface SessionResponseItems {
+  id: string
+  namespaces: {
+    account: SessionNamespace<AccountFields>
+  }
+}
+
 interface SessionResponse {
-  response: Response | null,
+  response: SessionResponseItems | null,
   error: any,
 }
 
@@ -114,10 +130,20 @@ let sessionPromise: Promise<void | SessionResponse>
 if (bindingChanged) {
   sessionPromise = clearSession()
     .then(createInitialSessionRequest)
-    .catch(onError);
+    .catch(onError)
 } else {
   sessionPromise = createInitialSessionRequest()
-    .catch(onError);
+    .then(result => {
+      if (!result.response ||
+        !result.response.namespaces.account.bindingId ||
+        result.response.namespaces.account.bindingId.value === bindingId
+      ) {
+        return result
+      }
+
+      return clearSession().then(createInitialSessionRequest)
+    })
+    .catch(onError)
 }
 
 (window as any).__RENDER_7_SESSION__ = (window as any).__RENDER_8_SESSION__ = {
